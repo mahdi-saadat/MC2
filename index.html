@@ -188,54 +188,36 @@
             document.getElementById("mcParams").innerText = `c = ${cohesion.toFixed(2)} MPa, Friction Angle = ${frictionAngle.toFixed(2)}°`;
 
             // Destroy and redraw the chart
-            // Destroy and redraw the chart
             if (chart) chart.destroy();
 
             chart = new Chart(document.getElementById("failurePlot").getContext("2d"), {
                 type: "line",
                 data: {
-                    labels: reducedSig3Values,
-                    datasets: [
-                        {
-                            label: "Hoek-Brown",
-                            data: sig1HB,
-                            borderColor: "red",
-                            borderWidth: 2,
-                            fill: false,
-                            pointRadius: 0 // Remove dots
-                        },
-                        {
-                            label: "Mohr-Coulomb",
-                            data: sig1MC,
-                            borderColor: "blue",
-                            borderWidth: 2,
-                            fill: false,
-                            pointRadius: 0 // Remove dots
-                        }
-                    ]
-                },
-                options: {
-                    responsive: false, // To allow specific dimensions
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            title: { display: true, text: "σ3 (MPa)" },
-                            ticks: {
-                                callback: value => value.toFixed(0), // Avoid decimals
-                                //stepSize: 5 // Customizable based on your dataset
-                            },
-                            //min: Math.min(...reducedSig3Values), // Allow negative x-axis
-                            //max: Math.max(...reducedSig3Values)  // Optional: Auto-expand range
-                        },
-                        y: {
-                            title: { display: true, text: "σ1 (MPa)" },
-                            beginAtZero: true // Y-axis starts from 0
-                        }
+                labels: reducedSig3Values,
+                datasets: [
+                    {
+                        label: "Hoek-Brown",
+                        data: sig1HB,
+                        borderColor: "red",
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0 // Remove dots
                     },
-                    plugins: {
-                        legend: {
-                            display: true
-                        }
+                    {
+                        label: "Mohr-Coulomb",
+                        data: sig1MC,
+                        borderColor: "blue",
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0 // Remove dots
+                    }
+                ]
+            },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { title: { display: true, text: "σ3 (MPa)" } },
+                        y: { title: { display: true, text: "σ1 (MPa)" } }
                     }
                 }
             });
