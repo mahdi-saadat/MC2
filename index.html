@@ -224,8 +224,14 @@
                             },
                             ticks: {
                                 callback: function(value, index, values) {
-                                // Show only whole numbers
-                                return Number.isInteger(value) ? value : null;
+                                    return Math.round(value);
+                                },
+                                // Determine min and max dynamically
+                                min: function(context) {
+                                    return Math.floor(Math.min(...context.chart.data.datasets[0].data));
+                                },
+                                max: function(context) {
+                                    return Math.ceil(Math.max(...context.chart.data.datasets[0].data));
                                 }
                             }
                         },
