@@ -214,8 +214,8 @@
                 ]
             },
                 options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: true,
                     scales: {
                         x: {
                             title: {
@@ -230,9 +230,6 @@
                             title: {
                                 display: true,
                                 text: "σ1 (MPa)"
-                            },
-                            ticks: {
-                                callback: (value) => Math.floor(value) // Round down to whole numbers
                             }
                         }
                     }
