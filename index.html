@@ -214,11 +214,27 @@
                 ]
             },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
+                    responsive: false,
+                    maintainAspectRatio: false,
                     scales: {
-                        x: { title: { display: true, text: "σ3 (MPa)" } },
-                        y: { title: { display: true, text: "σ1 (MPa)" } }
+                        x: {
+                            title: {
+                                display: true,
+                                text: "σ3 (MPa)"
+                            },
+                            ticks: {
+                                callback: (value) => Math.floor(value) // Round down to whole numbers
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: "σ1 (MPa)"
+                            },
+                            ticks: {
+                                callback: (value) => Math.floor(value) // Round down to whole numbers
+                            }
+                        }
                     }
                 }
             });
