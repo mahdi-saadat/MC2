@@ -165,8 +165,7 @@
             const sigt = calculateTensileStrength(UCSi, mb, s);
 
             // Generate sigma3 values
-            //const sig3Values = generateSigma3Values(sigt, 1.2, sigma_3, 500);
-            const sig3Values = generateSigma3Values(sigt, 1.2, sigma_3, 500).map(value => Math.round(value));
+            const sig3Values = generateSigma3Values(sigt, 1.2, sigma_3, 500);
 
 
             // Reduce data points for better performance
@@ -217,18 +216,28 @@
             },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            enabled: true,
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
                     scales: {
                         x: {
                             title: {
                                 display: true,
-                                text: "σ3 (MPa)"
+                                text: 'Confining Stress (σ3)'
                             }
                         },
                         y: {
                             title: {
                                 display: true,
-                                text: "σ1 (MPa)"
+                                text: 'Major Principal Stress (σ1)'
                             }
                         }
                     }
