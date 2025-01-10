@@ -223,7 +223,10 @@
                                 text: "σ3 (MPa)"
                             },
                             ticks: {
-                                precision: 0,
+                                callback: function(value, index, values) {
+                                // Show only whole numbers
+                                return Number.isInteger(value) ? value : null;
+                                }
                             }
                         },
                         y: {
