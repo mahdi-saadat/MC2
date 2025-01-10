@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoek-Brown vs Mohr-Coulomb Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        #parameters, #results {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        canvas {
+            display: block;
+            margin: 20px auto;
+            max-width: 600px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hoek-Brown vs Mohr-Coulomb Calculator</h1>
+
+    <div id="parameters">
+        <h2>Input Parameters</h2>
+        <div class="input-group">
+            <label for="UCSi">Uniaxial Compressive Strength (UCSi, MPa): </label>
+            <input type="number" id="UCSi" value="10" step="0.1">
+        </div>
+        <div class="input-group">
+            <label for="GSI">Geological Strength Index (GSI): </label>
+            <input type="number" id="GSI" value="50" step="0.1">
+        </div>
+        <div class="input-group">
+            <label for="mi">mi: </label>
+            <input type="number" id="mi" value="10" step="0.1">
+        </div>
+        <div class="input-group">
+            <label for="D">Disturbance Factor (D): </label>
+            <input type="number" id="D" value="0" step="0.1" min="0" max="1">
+        </div>
+        <div class="input-group">
+            <label for="density">Rock Density (MN/m³): </label>
+            <input type="number" id="density" value="0.025" step="0.001">
+        </div>
+        <div class="input-group">
+            <label for="depth">Depth (m): </label>
+            <input type="number" id="depth" value="150" step="1">
+        </div>
+        <button onclick="runCalculations()">Calculate and Update Plot</button>
+    </div>
+
+    <div id="results">
+        <h2>Results</h2>
+        <p><strong>Hoek-Brown Parameters:</strong> <span id="hbParams"></span></p>
+        <p><strong>Mohr-Coulomb Parameters:</strong> <span id="mcParams"></span></p>
+    </div>
+
+    <h2>Plot</h2>
+    <canvas id="failurePlot"></canvas>
+
+    <script>
+        let chart = null;
+
+        function calculateSigma3(density, depth) {
+            return density * depth;
+        }
+
+        function calculateTensileStrength(UCSi, mb, s) {
+            return -s * (UCSi / mb);
+        }
+
+        function generateSigma3Values(sigt, expansionRatio, sigma_3, steps) {
+            const range = [];
+            const increment = (expansionRatio * sigma_3 - sigt) / steps;
+            for (let i = 0; i <= steps; i++) {
+                range.push(sigt + i * increment);
+            }
+            return range;
+        }
+
+        function reduceData(data, factor) {
+            return data.filter((_, index) => index % factor === 0);
+        }
+
+        function hoekBrown(sig3, sigC, m, s, a) {
+            return sig3 + sigC * Math.pow(m * (sig3 / sigC) + s, a);
+        }
+
+        function mohrCoulomb(sig3, sigma_3, sigC, m, s, a) {
+            const nfi = 1 + a * m * Math.pow(m * (sigma_3 / sigC) + s, a - 1);
+            const c = 1 / (2 * Math.sqrt(nfi)) * (((1 - nfi) * sigma_3) + (sigC * Math.pow(m * (sigma_3 / sigC) + s, a)));
+            const phi = (2 * Math.atan(Math.sqrt(nfi)) - Math.PI / 2) * (180 / Math.PI);
+            const sig1 = nfi * sig3 + 2 * c * Math.sqrt(nfi);
+            return { sig1, c, phi };
+        }
+
+        function runCalculations() {
+            const UCSi = parseFloat(document.getElementById("UCSi").value);
+            const GSI = parseFloat(document.getElementById("GSI").value);
+            const mi = parseFloat(document.getElementById("mi").value);
+            const D = parseFloat(document.getElementById("D").value);
+            const density = parseFloat(document.getElementById("density").value);
+            const depth = parseFloat(document.getElementById("depth").value);
+
+            const sigma_3 = calculateSigma3(density, depth);
+
+            const mb = mi * Math.exp((GSI - 100) / 28 - 14 * D);
+            const s = Math.exp((GSI - 100) / 9 - 3 * D);
+            const a = 0.5 + (1 / 6) * (Math.exp(-GSI / 15) - Math.exp(-20 / 3));
+            const sigt = calculateTensileStrength(UCSi, mb, s);
+
+            const sig3Values = generateSigma3Values(sigt, 1.2, sigma_3, 500);
+            const reducedSig3Values = reduceData(sig3Values, 10);
+
+            const sig1HB = reducedSig3Values.map(sig3 => hoekBrown(sig3, UCSi, mb, s, a));
+            const sig1MC = [];
+            let cohesion = 0;
+            let frictionAngle = 0;
+
+            reducedSig3Values.forEach(sig3 => {
+                const { sig1, c, phi } = mohrCoulomb(sig3, sigma_3, UCSi, mb, s, a);
+                sig1MC.push(sig1);
+                cohesion = c;
+                frictionAngle = phi;
+            });
+
+            document.getElementById("hbParams").innerText = `mb = ${mb.toFixed(2)}, s = ${s.toFixed(4)}, a = ${a.toFixed(3)}`;
+            document.getElementById("mcParams").innerText = `c = ${cohesion.toFixed(2)} MPa, Friction Angle = ${frictionAngle.toFixed(2)}°`;
+
+            if (chart) chart.destroy();
+
+            chart = new Chart(document.getElementById("failurePlot").getContext("2d"), {
+                type: "line",
+                data: {
+                    labels: reducedSig3Values.map(Math.floor), // Show the integer part only
+                    datasets: [
+                        { label: "Hoek-Brown", data: sig1HB, borderColor: "red", borderWidth: 2, fill: false },
+                        { label: "Mohr-Coulomb", data: sig1MC, borderColor: "blue", borderWidth: 2, fill: false },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1, // Make the plot square
+                    scales: {
+                        x: {
+                            title: { display: true, text: "σ3 (MPa)" },
+                            ticks: {
+                                callback: value => Math.floor(value), // Show integers only
+                            }
+                        },
+                        y: {
+                            title: { display: true, text: "σ1 (MPa)" }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: "top" }
+                    },
+                    elements: {
+                        point: { radius: 0 }, // Remove the dots
+                        line: { tension: 0.0 }
+                    }
+                }
+            });
+        }
+
+        runCalculations();
+    </script>
+</body>
+</html>
